@@ -1000,11 +1000,17 @@
     var views = document.querySelectorAll('[data-view]');
     var tabs = document.querySelectorAll('.pagetab');
 
+    var viewToSlug = { cover:'', home:'skills', work:'work', about:'background', contact:'contact' };
+    var slugToView = { skills:'home', work:'work', background:'about', contact:'contact' };
     function showView(name){
       views.forEach(function(v){ v.hidden = v.getAttribute('data-view') !== name; });
       tabs.forEach(function(b){ b.setAttribute('aria-current', b.getAttribute('data-target') === name ? 'true' : 'false'); });
       document.body.classList.toggle('is-cover', name === 'cover');
-      try{ localStorage.setItem('jy-view', name); }catch(e){}
+      // keep the address bar in sync (#work, #background...) without remembering it across visits
+      try{
+        var slug = viewToSlug[name];
+        history.replaceState(null, '', slug ? '#' + slug : location.pathname + location.search);
+      }catch(e){}
       window.scrollTo({ top: 0, behavior: 'instant' });
     }
 
@@ -1106,12 +1112,13 @@
       });
     }
 
-    var start = 'cover';
-    try{
-      var saved = localStorage.getItem('jy-view');
-      if(saved) start = saved;
-    }catch(e){}
+    // every visit opens on the Cover page, unless the link points to a specific page (e.g. .../#work)
+    var start = slugToView[(location.hash || '').replace('#', '').toLowerCase()] || 'cover';
     showView(start);
+    window.addEventListener('hashchange', function(){
+      var v = slugToView[(location.hash || '').replace('#', '').toLowerCase()];
+      showView(v || 'cover');
+    });
   })();
 </script>
 </body>
